@@ -1,0 +1,24 @@
+schema: mcpg.dev/plugin/v1
+id: dev.mcpg.secret.vault
+name: HashiCorp Vault Secret Provider
+license: BUSL-1.1
+description: |
+  Resolves `vault://<backend_path>#<field>` URIs against a HashiCorp
+  Vault server. Supports KV v2 reads with optional field anchor, plus
+  rotation watching that emits `SecretRotation` events — either
+  poll-mode (KV v2 version metadata advances) or native
+  `sys/events/subscribe` (Vault 1.13+, over WebSocket).
+
+  v0.2 surface: auth via token / AppRole / userpass /
+  Kubernetes service account; poll + native watch; dynamic-secret
+  lease refresh (`sys/leases/renew`).
+class: secret_provider
+runtime: native-cdylib-v1
+protocol_version: "1.0"
+provides_schemes: ["vault"]
+required_capabilities:
+  # Vault is HTTPS — the typed capability `network_outbound` covers
+  # both HTTP and raw-TCP outbound. This plugin IS a secret store, so it doesn't need
+  # `secrets_read`; that capability is for plugins that *consume*
+  # the host's secret-resolver subsystem.
+  - network_outbound

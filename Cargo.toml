@@ -1,0 +1,58 @@
+[package]
+name = "mcpg-plugin-secret-vault"
+version = "0.1.0-alpha.15"
+license = "BUSL-1.1"
+edition = "2024"
+description = "HashiCorp Vault secret_provider plugin (dev.mcpg.secret.vault)"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+mcpg-plugin-protocol = { git = "https://github.com/mcpg-dev/mcpg-plugin-protocol", tag = "v0.1.0-beta.13", version = "=0.1.0-beta.13" }
+mcpg-plugin-sdk = { git = "https://github.com/mcpg-dev/mcpg-plugin-sdk", tag = "v0.1.0-beta.13", version = "=0.1.0-beta.13" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
+tracing = "0.1"
+
+# Hand-rolled HTTP client over reqwest. Vault's API surface this
+# plugin needs (auth/token, auth/approle/login, kv-v2 read,
+# leases/renew) is small enough that pulling in `vaultrs` would
+# add more complexity than it saves. rustls-tls so the cdylib
+# doesn't drag in OpenSSL system deps; matches the OIDC + webhook
+# plugins.
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
+tokio = { version = "1", features = ["rt-multi-thread", "time", "macros", "sync"] }
+url = "2"
+
+# Native (WebSocket) watch path for sys/events/subscribe — Vault
+# 1.13+. rustls-tls-webpki-roots matches reqwest's rustls choice so
+# the cdylib doesn't drag in OpenSSL. `connect` brings in the
+# tokio integration; `url` lets us pass `&str`/URL into
+# `IntoClientRequest`.
+tokio-tungstenite = { version = "0.24", default-features = false, features = ["connect", "rustls-tls-webpki-roots", "url"] }
+futures-util = { version = "0.3", default-features = false, features = ["std"] }
+
+[dev-dependencies]
+testcontainers = { version = "0.27", features = ["blocking"] }
+testcontainers-modules = { version = "0.15", features = ["hashicorp_vault", "blocking"] }
+
+# Direct reqwest in the integration test for fixture seeding —
+# we POST KV v2 writes via Vault's HTTP API to populate a secret
+# the plugin then reads.
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "blocking"] }
+serde_json = "1.0"
+
+[features]
+default = ["cdylib-export"]
+cdylib-export = []
+# Declared so the SDK's `declare_secret_provider_plugin!`
+# `build_static` accessor (gated
+# `#[cfg(feature = "static-firstparty")]`) does not trigger
+# `unexpected_cfgs` in consumer compilation. Empty: this plugin is
+# consumed as a cdylib, not via the static-firstparty fast path.
+static-firstparty = []
+# Gates the docker-backed integration suite. Run with
+# `cargo test -p mcpg-plugin-secret-vault --features integration-tests`.
+integration-tests = []
