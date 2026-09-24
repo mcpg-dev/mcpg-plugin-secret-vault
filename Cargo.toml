@@ -1,6 +1,6 @@
 [package]
 name = "mcpg-plugin-secret-vault"
-version = "0.1.0-alpha.31"
+version = "0.1.0-alpha.37"
 license = "BUSL-1.1"
 edition = "2024"
 description = "HashiCorp Vault secret_provider plugin (dev.mcpg.secret.vault)"
@@ -9,8 +9,8 @@ description = "HashiCorp Vault secret_provider plugin (dev.mcpg.secret.vault)"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-mcpg-plugin-protocol = { git = "https://github.com/mcpg-dev/mcpg-plugin-protocol", tag = "v0.1.0-beta.29", version = "=0.1.0-beta.29" }
-mcpg-plugin-sdk = { git = "https://github.com/mcpg-dev/mcpg-plugin-sdk", tag = "v0.1.0-beta.30", version = "=0.1.0-beta.30" }
+mcpg-plugin-protocol = { git = "https://github.com/mcpg-dev/mcpg-plugin-protocol", tag = "v0.1.0-beta.35", version = "=0.1.0-beta.35" }
+mcpg-plugin-sdk = { git = "https://github.com/mcpg-dev/mcpg-plugin-sdk", tag = "v0.1.0-beta.36", version = "=0.1.0-beta.36" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 thiserror = "2.0"
@@ -19,10 +19,10 @@ tracing = "0.1"
 # Hand-rolled HTTP client over reqwest. Vault's API surface this
 # plugin needs (auth/token, auth/approle/login, kv-v2 read,
 # leases/renew) is small enough that pulling in `vaultrs` would
-# add more complexity than it saves. rustls-tls so the cdylib
+# add more complexity than it saves. rustls so the cdylib
 # doesn't drag in OpenSSL system deps; matches the OIDC + webhook
 # plugins.
-reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
+reqwest = { version = "0.13", default-features = false, features = ["rustls", "json"] }
 tokio = { version = "1", features = ["rt-multi-thread", "time", "macros", "sync"] }
 url = "2"
 
@@ -31,7 +31,7 @@ url = "2"
 # the cdylib doesn't drag in OpenSSL. `connect` brings in the
 # tokio integration; `url` lets us pass `&str`/URL into
 # `IntoClientRequest`.
-tokio-tungstenite = { version = "0.24", default-features = false, features = ["connect", "rustls-tls-webpki-roots", "url"] }
+tokio-tungstenite = { version = "0.30", default-features = false, features = ["connect", "rustls-tls-webpki-roots", "url"] }
 futures-util = { version = "0.3", default-features = false, features = ["std"] }
 
 [dev-dependencies]
@@ -41,7 +41,7 @@ testcontainers-modules = { version = "0.15", features = ["hashicorp_vault", "blo
 # Direct reqwest in the integration test for fixture seeding —
 # we POST KV v2 writes via Vault's HTTP API to populate a secret
 # the plugin then reads.
-reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "blocking"] }
+reqwest = { version = "0.13", default-features = false, features = ["rustls", "json", "blocking"] }
 serde_json = "1.0"
 
 [features]
